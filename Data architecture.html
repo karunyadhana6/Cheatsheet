@@ -1,0 +1,3527 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Architecture Strategies Cheatsheet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            padding: 20px;
+            line-height: 1.6;
+            min-height: 100vh;
+            color: #f8fafc;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-3px);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
+            }
+
+            50% {
+                transform: scale(1.01);
+                box-shadow: 0 8px 30px rgba(15, 23, 42, 0.12);
+            }
+        }
+
+        @keyframes slideInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            position: relative;
+            animation: slideInUp 0.8s ease-out;
+            z-index: 1;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 25%, #ec4899 50%, #f59e0b 75%, #10b981 100%);
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            margin-top: 8px;
+            position: relative;
+            letter-spacing: -1px;
+            text-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+        }
+
+        h1:hover {
+            filter: brightness(1.2);
+            transition: filter 0.3s ease;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+            border-radius: 2px;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
+        }
+
+        .intro {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 28px;
+            background: rgba(51, 65, 85, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .intro p {
+            color: #cbd5e1;
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+
+        .strategies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .strategy-card {
+            animation: slideInUp 0.6s ease-out;
+            animation-fill-mode: both;
+            background: rgba(51, 65, 85, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .strategy-card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .strategy-card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .strategy-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .strategy-card:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .strategy-card:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .strategy-card:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .strategy-card:nth-child(7) {
+            animation-delay: 0.7s;
+        }
+
+        .strategy-card:nth-child(8) {
+            animation-delay: 0.8s;
+        }
+
+        .strategy-card:nth-child(9) {
+            animation-delay: 0.9s;
+        }
+
+        .strategy-card:nth-child(10) {
+            animation-delay: 1.0s;
+        }
+
+        .strategy-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+            border-radius: 16px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .strategy-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .strategy-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.3), 0 0 0 1px rgba(148, 163, 184, 0.3);
+            border-color: rgba(99, 102, 241, 0.5);
+        }
+
+        .strategy-card:hover::after {
+            opacity: 1;
+        }
+
+        .strategy-card:nth-child(1)::before {
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .strategy-card:nth-child(2)::before {
+            background: linear-gradient(90deg, #059669 0%, #047857 100%);
+        }
+
+        .strategy-card:nth-child(3)::before {
+            background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 100%);
+        }
+
+        .strategy-card:nth-child(4)::before {
+            background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        .strategy-card:nth-child(5)::before {
+            background: linear-gradient(90deg, #ea580c 0%, #c2410c 100%);
+        }
+
+        .strategy-card:nth-child(6)::before {
+            background: linear-gradient(90deg, #0891b2 0%, #0e7490 100%);
+        }
+
+        .strategy-card:nth-child(7)::before {
+            background: linear-gradient(90deg, #be185d 0%, #9d174d 100%);
+        }
+
+        .strategy-card:nth-child(8)::before {
+            background: linear-gradient(90deg, #ca8a04 0%, #a16207 100%);
+        }
+
+        .strategy-card:nth-child(9)::before {
+            background: linear-gradient(90deg, #4338ca 0%, #3730a3 100%);
+        }
+
+        .strategy-card:nth-child(10)::before {
+            background: linear-gradient(90deg, #15803d 0%, #166534 100%);
+        }
+
+        .strategy-title {
+            font-size: 20px;
+            margin-bottom: 12px;
+            color: #f8fafc;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .strategy-number {
+            font-size: 28px;
+            font-weight: 700;
+            filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
+        }
+
+        .strategy-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .strategy-description {
+            color: #e2e8f0;
+            font-size: 14px;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 10px;
+            border-left: 4px solid;
+            line-height: 1.7;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .strategy-card:nth-child(1) .strategy-description {
+            border-left-color: #3b82f6;
+        }
+
+        .strategy-card:nth-child(2) .strategy-description {
+            border-left-color: #059669;
+        }
+
+        .strategy-card:nth-child(3) .strategy-description {
+            border-left-color: #7c3aed;
+        }
+
+        .strategy-card:nth-child(4) .strategy-description {
+            border-left-color: #dc2626;
+        }
+
+        .strategy-card:nth-child(5) .strategy-description {
+            border-left-color: #ea580c;
+        }
+
+        .strategy-card:nth-child(6) .strategy-description {
+            border-left-color: #0891b2;
+        }
+
+        .strategy-card:nth-child(7) .strategy-description {
+            border-left-color: #be185d;
+        }
+
+        .strategy-card:nth-child(8) .strategy-description {
+            border-left-color: #ca8a04;
+        }
+
+        .strategy-card:nth-child(9) .strategy-description {
+            border-left-color: #4338ca;
+        }
+
+        .strategy-card:nth-child(10) .strategy-description {
+            border-left-color: #15803d;
+        }
+
+        .strategy-points {
+            list-style: none;
+            padding: 0;
+        }
+
+        .strategy-points li {
+            color: #f8fafc;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            padding: 12px 14px;
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 8px;
+            border-left: 3px solid #6366f1;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .strategy-points li:hover {
+            background: rgba(99, 102, 241, 0.2);
+            transform: translateX(6px);
+            border-left-color: #a78bfa;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+        }
+
+        .strategy-points li::before {
+            content: '→';
+            color: #a78bfa;
+            font-weight: 700;
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .implementation-section {
+            margin-top: 40px;
+            padding: 32px;
+            background: rgba(51, 65, 85, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-left: 4px solid #10b981;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .implementation-title {
+            color: #f8fafc;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .implementation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .implementation-item {
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border-left: 4px solid #10b981;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .implementation-item:hover {
+            background: rgba(16, 185, 129, 0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+            border-left-color: #34d399;
+        }
+
+        .implementation-item h4 {
+            color: #f8fafc;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .implementation-item p {
+            color: #e2e8f0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .tools-section {
+            margin-top: 30px;
+            padding: 32px;
+            background: rgba(51, 65, 85, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-left: 4px solid #a78bfa;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .tools-title {
+            color: #f8fafc;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .tool-category {
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .tool-category:hover {
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.2);
+            transform: translateY(-3px);
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(167, 139, 250, 0.3);
+        }
+
+        .tool-category h5 {
+            color: #f8fafc;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .tool-category p {
+            color: #e2e8f0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .tech-tag {
+            display: inline-block;
+            background: #3b82f6;
+            color: #ffffff;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px 2px;
+            border: 1px solid #2563eb;
+        }
+
+        .patterns-section {
+            margin-top: 40px;
+            padding: 32px;
+            background: rgba(51, 65, 85, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-left: 4px solid #f87171;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .patterns-title {
+            color: #f8fafc;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .patterns-intro {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .patterns-intro p {
+            color: #e2e8f0;
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .pattern-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pattern-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            border-radius: 16px 16px 0 0;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .lambda::before {
+            background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%);
+        }
+
+        .kappa::before {
+            background: linear-gradient(90deg, #ea580c 0%, #c2410c 100%);
+        }
+
+        .lakehouse::before {
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+
+        .pattern-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            background: rgba(51, 65, 85, 0.7);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.25);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .pattern-header {
+            margin-bottom: 20px;
+        }
+
+        .pattern-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 8px;
+        }
+
+        .pattern-icon {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .lambda .pattern-icon {
+            color: #e2e8f0;
+        }
+
+        .kappa .pattern-icon {
+            color: #e2e8f0;
+        }
+
+        .lakehouse .pattern-icon {
+            color: #e2e8f0;
+        }
+
+        .pattern-subtitle {
+            color: #cbd5e1;
+            font-size: 14px;
+            font-weight: 500;
+            margin-left: 43px;
+        }
+
+        .pattern-description {
+            color: #e2e8f0;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+
+        .lambda .pattern-description {
+            border-left-color: #dc2626;
+        }
+
+        .kappa .pattern-description {
+            border-left-color: #ea580c;
+        }
+
+        .lakehouse .pattern-description {
+            border-left-color: #3b82f6;
+        }
+
+        .pattern-layers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .layer {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .layer:hover {
+            background: #f7fafc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+        }
+
+        .layer h4 {
+            color: #f8fafc;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .layer ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .layer li {
+            color: #e2e8f0;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+            padding-left: 16px;
+            position: relative;
+        }
+
+        .layer li::before {
+            content: '•';
+            color: #f8fafc;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .pattern-use-cases {
+            margin-bottom: 20px;
+        }
+
+        .pattern-use-cases h4 {
+            color: #f8fafc;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .use-case-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .use-case-tag {
+            background: rgba(34, 197, 94, 0.2);
+            color: #f0fdf4;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .pattern-pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .pros,
+        .cons {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .pros h5 {
+            color: #f8fafc;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .cons h5 {
+            color: #f8fafc;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pros ul,
+        .cons ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .pros li,
+        .cons li {
+            color: #e2e8f0;
+            font-size: 12px;
+            line-height: 1.4;
+            margin-bottom: 4px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .pros li::before {
+            content: '✓';
+            color: #10b981;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .cons li::before {
+            content: '✗';
+            color: #ef4444;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .pattern-selection {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pattern-selection h3 {
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .selection-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .selection-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .selection-card h4 {
+            color: #f8fafc;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .selection-card ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .selection-card li {
+            color: #e2e8f0;
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: 6px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .selection-card li::before {
+            content: '→';
+            color: #cbd5e1;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        /* Data Flow Architecture Styles - Professional Version */
+        .dataflow-section {
+            margin-top: 20px;
+            padding: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+        }
+
+        .dataflow-title {
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dataflow-intro {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .dataflow-intro p {
+            color: #e2e8f0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .dataflow-diagram {
+            background: rgba(51, 65, 85, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+        }
+
+        .flow-layer {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .flow-layer:hover {
+            background: rgba(51, 65, 85, 0.6);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+        }
+
+        .layer-header {
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .layer-title {
+            color: #f8fafc;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .layer-subtitle {
+            color: #cbd5e1;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .components-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .component-card {
+            background: rgba(51, 65, 85, 0.6);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .component-card:hover {
+            background: rgba(71, 85, 105, 0.6);
+            transform: translateY(-2px);
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .component-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .component-title {
+            color: #fbfbfb;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .component-desc {
+            color: #cbd5e1;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        .component-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1px;
+            justify-content: center;
+            margin-top: 3px;
+        }
+
+        .component-details .tech-tag {
+            font-size: 8px;
+            padding: 2px 4px;
+            background: #3b82f6;
+            color: #ffffff;
+            border: 1px solid #2563eb;
+        }
+
+        .flow-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .arrow-line {
+            width: 2px;
+            height: 12px;
+            background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+            border-radius: 1px;
+        }
+
+        .arrow-head {
+            color: #cbd5e1;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: -2px;
+        }
+
+        /* Specific layer styling */
+        .sources-layer {
+            border-left: 4px solid #3b82f6;
+        }
+
+        .ingestion-layer {
+            border-left: 4px solid #8b5cf6;
+        }
+
+        .storage-layer {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .processing-layer {
+            border-left: 4px solid #ef4444;
+        }
+
+        .curated-layer {
+            border-left: 4px solid #06b6d4;
+        }
+
+        .consumption-layer {
+            border-left: 4px solid #22c55e;
+        }
+
+        .processing-engines {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .job-types {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .job-type {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .job-type h4 {
+            color: #f8fafc;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .job-type ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .job-type li {
+            color: #e2e8f0;
+            font-size: 12px;
+            line-height: 1.4;
+            margin-bottom: 5px;
+            padding-left: 12px;
+            position: relative;
+        }
+
+        .job-type li::before {
+            content: '•';
+            color: #cbd5e1;
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .governance-bar {
+            margin-top: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #7c3aed;
+        }
+
+        .governance-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .governance-title {
+            color: #f8fafc;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .governance-icon {
+            font-size: 20px;
+        }
+
+        .governance-tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .governance-tool {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(51, 65, 85, 0.6);
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .governance-tool:hover {
+            background: rgba(71, 85, 105, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+        }
+
+        .tool-icon {
+            font-size: 18px;
+            color: #cbd5e1;
+        }
+
+        .tool-info {
+            flex: 1;
+        }
+
+        .tool-name {
+            color: #f8fafc;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .tool-desc {
+            color: #cbd5e1;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .architecture-benefits {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #059669;
+        }
+
+        .architecture-benefits h3 {
+            color: #f8fafc;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .benefit-card {
+            background: rgba(51, 65, 85, 0.6);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .benefit-card:hover {
+            background: rgba(71, 85, 105, 0.6);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+        }
+
+        .benefit-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .benefit-card h4 {
+            color: #f8fafc;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .benefit-card p {
+            color: #e2e8f0;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        /* DAMA Image Styles */
+        .dama-image-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(51, 65, 85, 0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .dama-framework-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(5, 150, 105, 0.3);
+        }
+
+        .dama-framework-image:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 40px rgba(5, 150, 105, 0.4);
+            border-color: rgba(5, 150, 105, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            .dama-framework-image {
+                max-width: 95%;
+            }
+        }
+
+        /* DAMA Content Styles */
+        .dama-intro {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(51, 65, 85, 0.2);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            line-height: 1.6;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        /* Governance Center Styles */
+        .governance-center {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .center-card {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 32px rgba(5, 150, 105, 0.3);
+            border: 2px solid rgba(5, 150, 105, 0.3);
+            max-width: 500px;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .center-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(5, 150, 105, 0.4);
+        }
+
+        .center-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .center-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .center-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .center-description,
+        .center-includes,
+        .center-outputs {
+            margin: 15px 0;
+            text-align: left;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .center-description strong,
+        .center-includes strong,
+        .center-outputs strong {
+            color: #d1fae5;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Knowledge Areas Title */
+        .knowledge-areas-title {
+            text-align: center;
+            margin: 50px 0 30px;
+        }
+
+        .knowledge-areas-title h3 {
+            color: #e2e8f0;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .knowledge-areas-title p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        /* Knowledge Areas Grid */
+        .knowledge-areas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .knowledge-card {
+            background: rgba(51, 65, 85, 0.4);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+            color: #e2e8f0;
+        }
+
+        .knowledge-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(51, 65, 85, 0.6);
+        }
+
+        .knowledge-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .knowledge-number {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1rem;
+        }
+
+        .knowledge-header h4 {
+            color: #f1f5f9;
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .knowledge-purpose,
+        .knowledge-includes,
+        .knowledge-outputs {
+            margin: 12px 0;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .knowledge-purpose strong,
+        .knowledge-includes strong,
+        .knowledge-outputs strong {
+            color: #cbd5e1;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        /* Color coding for different knowledge areas */
+        .knowledge-card.architecture .knowledge-number {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .knowledge-card.modeling .knowledge-number {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        }
+
+        .knowledge-card.storage .knowledge-number {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        .knowledge-card.security .knowledge-number {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+        }
+
+        .knowledge-card.integration .knowledge-number {
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+        }
+
+        .knowledge-card.document .knowledge-number {
+            background: linear-gradient(135deg, #7c2d12, #92400e);
+        }
+
+        .knowledge-card.mdm .knowledge-number {
+            background: linear-gradient(135deg, #be185d, #9d174d);
+        }
+
+        .knowledge-card.warehousing .knowledge-number {
+            background: linear-gradient(135deg, #1e40af, #1d4ed8);
+        }
+
+        .knowledge-card.metadata .knowledge-number {
+            background: linear-gradient(135deg, #4338ca, #3730a3);
+        }
+
+        .knowledge-card.quality .knowledge-number {
+            background: linear-gradient(135deg, #15803d, #166534);
+        }
+
+        /* DAMA Implementation Guide */
+        .dama-implementation {
+            margin: 50px 0;
+            padding: 30px;
+            background: rgba(51, 65, 85, 0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .dama-implementation h3 {
+            color: #f1f5f9;
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+        }
+
+        .implementation-phases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .phase-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(5, 150, 105, 0.5);
+        }
+
+        .phase-card h4 {
+            color: #f1f5f9;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(5, 150, 105, 0.3);
+        }
+
+        .phase-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .phase-card li {
+            color: #cbd5e1;
+            margin: 10px 0;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .phase-card li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        /* Additional responsive design for DAMA section */
+        @media (max-width: 992px) {
+            .knowledge-areas-grid {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .knowledge-areas-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .implementation-phases {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .center-card {
+                margin: 0 10px;
+                padding: 25px;
+            }
+            
+            .knowledge-card {
+                padding: 20px;
+            }
+            
+            .phase-card {
+                padding: 20px;
+            }
+            
+            .dama-implementation {
+                padding: 20px;
+                margin: 30px 0;
+            }
+        }
+
+        /* DAMA Content Styles */
+        .dama-intro {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(51, 65, 85, 0.2);
+            border-radius: 12px;
+            font-size: 1.1rem;
+            color: #e2e8f0;
+            line-height: 1.6;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        /* Governance Center Styles */
+        .governance-center {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .center-card {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 8px 32px rgba(5, 150, 105, 0.3);
+            border: 2px solid rgba(5, 150, 105, 0.3);
+            max-width: 500px;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+
+        .center-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(5, 150, 105, 0.4);
+        }
+
+        .center-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .center-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .center-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .center-description,
+        .center-includes,
+        .center-outputs {
+            margin: 15px 0;
+            text-align: left;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .center-description strong,
+        .center-includes strong,
+        .center-outputs strong {
+            color: #d1fae5;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Knowledge Areas Title */
+        .knowledge-areas-title {
+            text-align: center;
+            margin: 50px 0 30px;
+        }
+
+        .knowledge-areas-title h3 {
+            color: #e2e8f0;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .knowledge-areas-title p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        /* Knowledge Areas Grid */
+        .knowledge-areas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .knowledge-card {
+            background: rgba(51, 65, 85, 0.4);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+            color: #e2e8f0;
+        }
+
+        .knowledge-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(51, 65, 85, 0.6);
+        }
+
+        .knowledge-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .knowledge-number {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1rem;
+        }
+
+        .knowledge-header h4 {
+            color: #f1f5f9;
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .knowledge-purpose,
+        .knowledge-includes,
+        .knowledge-outputs {
+            margin: 12px 0;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .knowledge-purpose strong,
+        .knowledge-includes strong,
+        .knowledge-outputs strong {
+            color: #cbd5e1;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        /* Color coding for different knowledge areas */
+        .knowledge-card.architecture .knowledge-number {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .knowledge-card.modeling .knowledge-number {
+            background: linear-gradient(135deg, #7c3aed, #5b21b6);
+        }
+
+        .knowledge-card.storage .knowledge-number {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+        }
+
+        .knowledge-card.security .knowledge-number {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+        }
+
+        .knowledge-card.integration .knowledge-number {
+            background: linear-gradient(135deg, #0891b2, #0e7490);
+        }
+
+        .knowledge-card.document .knowledge-number {
+            background: linear-gradient(135deg, #7c2d12, #92400e);
+        }
+
+        .knowledge-card.mdm .knowledge-number {
+            background: linear-gradient(135deg, #be185d, #9d174d);
+        }
+
+        .knowledge-card.warehousing .knowledge-number {
+            background: linear-gradient(135deg, #1e40af, #1d4ed8);
+        }
+
+        .knowledge-card.metadata .knowledge-number {
+            background: linear-gradient(135deg, #4338ca, #3730a3);
+        }
+
+        .knowledge-card.quality .knowledge-number {
+            background: linear-gradient(135deg, #15803d, #166534);
+        }
+
+        /* DAMA Implementation Guide */
+        .dama-implementation {
+            margin: 50px 0;
+            padding: 30px;
+            background: rgba(51, 65, 85, 0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .dama-implementation h3 {
+            color: #f1f5f9;
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+        }
+
+        .implementation-phases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .phase-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(5, 150, 105, 0.5);
+        }
+
+        .phase-card h4 {
+            color: #f1f5f9;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(5, 150, 105, 0.3);
+        }
+
+        .phase-card ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .phase-card li {
+            color: #cbd5e1;
+            margin: 10px 0;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .phase-card li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        /* Responsive design for DAMA section */
+        @media (max-width: 768px) {
+            .knowledge-areas-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .implementation-phases {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .center-card {
+                margin: 0 10px;
+                padding: 25px;
+            }
+            
+            .knowledge-card {
+                padding: 20px;
+            }
+            
+            .phase-card {
+                padding: 20px;
+            }
+        }
+
+        /* Interactive Architecture Diagram Styles */
+        .component-card {
+            cursor: pointer;
+            position: relative;
+            overflow: visible;
+        }
+
+        .component-card.active {
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            z-index: 10;
+        }
+
+        /* Data Flow Animation */
+        .flow-arrow {
+            position: relative;
+        }
+
+        .flow-animation {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: #3b82f6;
+            border-radius: 50%;
+            opacity: 0;
+            animation: flowAnimation 3s infinite;
+        }
+
+        @keyframes flowAnimation {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-10px);
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(30px);
+            }
+            100% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(40px);
+            }
+        }
+
+        /* Component Details Modal */
+        .component-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .component-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .modal-title {
+            color: #f8fafc;
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #f8fafc;
+        }
+
+        .modal-body {
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section h4 {
+            color: #3b82f6;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .modal-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .modal-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .modal-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Technology Comparison Matrix */
+        .tech-comparison {
+            margin: 30px 0;
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .tech-comparison h3 {
+            color: #f8fafc;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(51, 65, 85, 0.4);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .comparison-table th {
+            background: rgba(59, 130, 246, 0.2);
+            color: #f8fafc;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .comparison-table td {
+            color: #e2e8f0;
+            font-size: 13px;
+        }
+
+        .comparison-table tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .rating {
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .rating .star {
+            color: #fbbf24;
+            font-size: 14px;
+        }
+
+        .rating .star.empty {
+            color: #6b7280;
+        }
+
+        /* Pulse effect for all components - always active */
+        .component-card {
+            animation: pulseGlow 2s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+            }
+        }
+
+        /* Responsive adjustments for interactive features */
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 20px;
+                max-width: calc(100% - 40px);
+                padding: 20px;
+            }
+            
+            .comparison-table {
+                font-size: 12px;
+            }
+            
+            .comparison-table th,
+            .comparison-table td {
+                padding: 8px 4px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        // Lazy Loading with Intersection Observer
+        document.addEventListener('DOMContentLoaded', function () {
+            // Configuration for the observer
+            const observerOptions = {
+                root: null,
+                rootMargin: '50px',
+                threshold: 0.1
+            };
+
+            // Callback function for intersection observer
+            const observerCallback = (entries, observer) => {
+                entries.forEach((entry, index) => {
+                    if (entry.isIntersecting) {
+                        // Add a slight delay for staggered animation effect
+                        setTimeout(() => {
+                            entry.target.classList.add('loaded');
+                        }, index * 50);
+
+                        // Stop observing this element once it's loaded
+                        observer.unobserve(entry.target);
+                    }
+                });
+            };
+
+            // Create the observer
+            const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+            // Select all elements to lazy load
+            const lazyElements = document.querySelectorAll('.strategy-card, .pattern-card, .knowledge-card, .implementation-item, .tool-category, .benefit-card, .phase-card, .component-card, .layer, .governance-tool');
+
+            // Add lazy-load class and observe each element
+            lazyElements.forEach((element) => {
+                element.classList.add('lazy-load');
+                observer.observe(element);
+            });
+
+            // Lazy load images (if any are added in the future)
+            const lazyImages = document.querySelectorAll('img[data-src]');
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        img.classList.add('loaded');
+                        observer.unobserve(img);
+                    }
+                });
+            }, observerOptions);
+
+            lazyImages.forEach(img => imageObserver.observe(img));
+
+            // Performance optimization: Reduce animations on low-end devices
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+            if (prefersReducedMotion.matches) {
+                document.querySelectorAll('.lazy-load').forEach(el => {
+                    el.style.transition = 'none';
+                });
+            }
+
+            // Interactive Architecture Diagram Functionality
+            initializeInteractiveDiagram();
+        });
+
+        function initializeInteractiveDiagram() {
+            // Component data for detailed information
+            const componentData = {
+                databases: {
+                    title: '🗃️ Databases (RDBMS)',
+                    description: 'Traditional relational database management systems that serve as primary data sources.',
+                    technologies: ['MySQL', 'PostgreSQL', 'Oracle', 'SQL Server'],
+                    useCase: 'Transactional systems, customer data, financial records',
+                    scalability: 'Vertical scaling, read replicas',
+                    performance: 'ACID compliance, optimized for transactions',
+                    considerations: 'Schema rigidity, licensing costs, maintenance overhead'
+                },
+                kafka: {
+                    title: '⚡ Apache Kafka',
+                    description: 'Distributed streaming platform for real-time data pipelines and streaming analytics.',
+                    technologies: ['Kafka Streams', 'Kafka Connect', 'Schema Registry'],
+                    useCase: 'Real-time data ingestion, event sourcing, microservices communication',
+                    scalability: 'Horizontal partitioning, distributed architecture',
+                    performance: 'High throughput, low latency, fault tolerance',
+                    considerations: 'Complex setup, monitoring requirements, retention policies'
+                },
+                spark: {
+                    title: '⚡ Apache Spark',
+                    description: 'Unified analytics engine for large-scale data processing with built-in modules for streaming, SQL, ML and graph processing.',
+                    technologies: ['Spark SQL', 'Spark Streaming', 'MLlib', 'GraphX'],
+                    useCase: 'ETL processing, machine learning, real-time analytics',
+                    scalability: 'Auto-scaling, cluster management',
+                    performance: 'In-memory processing, optimized execution engine',
+                    considerations: 'Memory requirements, cluster tuning, cost optimization'
+                },
+                hdfs: {
+                    title: '🗂️ Hadoop HDFS',
+                    description: 'Distributed file system designed to run on commodity hardware, providing high throughput access to application data.',
+                    technologies: ['NameNode', 'DataNode', 'Secondary NameNode'],
+                    useCase: 'Data lake storage, batch processing, archival',
+                    scalability: 'Horizontal scaling, petabyte capacity',
+                    performance: 'High throughput, fault tolerance, data locality',
+                    considerations: 'Single point of failure, maintenance complexity, latency'
+                }
+            };
+
+            // Add click handlers to component cards
+            document.querySelectorAll('.component-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const componentType = this.classList[1]; // Get the second class name
+                    if (componentData[componentType]) {
+                        showComponentModal(componentData[componentType]);
+                        this.classList.add('active');
+                        setTimeout(() => this.classList.remove('active'), 3000);
+                    }
+                });
+            });
+
+            // Create and add modal to DOM
+            createComponentModal();
+
+            // Add data flow animations
+            addDataFlowAnimations();
+
+            // Enable pulse animation for all components by default
+            const components = document.querySelectorAll('.component-card');
+            components.forEach(comp => comp.classList.add('pulse'));
+        }
+
+        function showComponentModal(data) {
+            const modal = document.getElementById('componentModal');
+            const modalContent = modal.querySelector('.modal-body');
+            
+            modalContent.innerHTML = `
+                <div class="modal-section">
+                    <p>${data.description}</p>
+                </div>
+                <div class="modal-section">
+                    <h4>🔧 Key Technologies</h4>
+                    <ul class="modal-list">
+                        ${data.technologies.map(tech => `<li>${tech}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="modal-section">
+                    <h4>🎯 Primary Use Case</h4>
+                    <p>${data.useCase}</p>
+                </div>
+                <div class="modal-section">
+                    <h4>📈 Scalability</h4>
+                    <p>${data.scalability}</p>
+                </div>
+                <div class="modal-section">
+                    <h4>⚡ Performance</h4>
+                    <p>${data.performance}</p>
+                </div>
+                <div class="modal-section">
+                    <h4>⚠️ Considerations</h4>
+                    <p>${data.considerations}</p>
+                </div>
+            `;
+
+            document.querySelector('.modal-title').innerHTML = data.title;
+            modal.classList.add('active');
+        }
+
+        function createComponentModal() {
+            const modal = document.createElement('div');
+            modal.id = 'componentModal';
+            modal.className = 'component-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title"></h3>
+                        <button class="modal-close" onclick="closeComponentModal()">&times;</button>
+                    </div>
+                    <div class="modal-body"></div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeComponentModal();
+                }
+            });
+        }
+
+        function closeComponentModal() {
+            document.getElementById('componentModal').classList.remove('active');
+            document.querySelectorAll('.component-card.active').forEach(card => {
+                card.classList.remove('active');
+            });
+        }
+
+        function addDataFlowAnimations() {
+            const flowArrows = document.querySelectorAll('.flow-arrow');
+            flowArrows.forEach((arrow, index) => {
+                const animationDot = document.createElement('div');
+                animationDot.className = 'flow-animation';
+                animationDot.style.animationDelay = `${index * 0.5}s`;
+                arrow.appendChild(animationDot);
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeComponentModal();
+            }
+        });
+    </script>
+    <div class="container">
+        <h1>🏗️ Data Architecture Strategies</h1>
+
+        <div class="intro">
+            <p>Comprehensive guide to 10 actionable strategies for Data Architects covering architecture, governance,
+                integration, and analytics in enterprise environments.</p>
+            <p>Transform your organization's data landscape with these proven strategies for scalable, secure, and
+                efficient data architecture.</p>
+        </div>
+
+        <div class="strategies-grid">
+            <!-- Strategy 1 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">1️⃣</span>
+                        Establish a Unified Data Strategy
+                    </h3>
+                    <div class="strategy-description">
+                        Create alignment between data initiatives and business objectives with a comprehensive target
+                        state vision.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Align data initiatives with business objectives</li>
+                        <li>Define target state for data architecture, platforms, models, and standards</li>
+                        <li>Ensure alignment between Finance, Billing, Member, and other domains</li>
+                        <li>Create roadmap for data transformation journey</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 2 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">2️⃣</span>
+                        Design for Scalability & Flexibility
+                    </h3>
+                    <div class="strategy-description">
+                        Build modular, adaptable architectures that can grow with your organization's evolving needs.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Use modular, loosely coupled architectures</li>
+                        <li>Support growth in data volume, velocity, and variety</li>
+                        <li>Design pipelines and models that adapt to new business requirements</li>
+                        <li>Implement microservices and API-first approaches</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 3 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">3️⃣</span>
+                        Implement Master Data Management
+                    </h3>
+                    <div class="strategy-description">
+                        Create a single source of truth for critical business entities across all domains.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Identify critical entities (Member, Customer, Product, Account)</li>
+                        <li>Maintain single source of truth to reduce duplication and inconsistency</li>
+                        <li>Enable cross-domain integration (Finance ↔ Billing ↔ Member)</li>
+                        <li>Implement data stewardship and ownership models</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 4 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">4️⃣</span>
+                        Standardize Data Models
+                    </h3>
+                    <div class="strategy-description">
+                        Develop canonical models with consistent naming conventions for seamless integration.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Develop canonical models for shared entities</li>
+                        <li>Enforce consistent naming conventions and data types</li>
+                        <li>Support both operational and analytical use cases</li>
+                        <li>Create data dictionaries and metadata repositories</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 5 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">5️⃣</span>
+                        Establish Data Governance Framework
+                    </h3>
+                    <div class="strategy-description">
+                        Implement comprehensive data governance to ensure data quality, compliance, and accountability across the organization.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Create data governance council with cross-functional representation</li>
+                        <li>Define data ownership and stewardship roles</li>
+                        <li>Implement data quality monitoring and remediation processes</li>
+                        <li>Establish data privacy and security policies</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 6 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">6️⃣</span>
+                        Build Real-time Data Processing Capabilities
+                    </h3>
+                    <div class="strategy-description">
+                        Enable real-time analytics and decision-making through streaming data architectures and event-driven systems.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Implement streaming platforms (Kafka, Pulsar, Kinesis)</li>
+                        <li>Design event-driven microservices architecture</li>
+                        <li>Build real-time analytics and monitoring dashboards</li>
+                        <li>Enable low-latency data processing and alerts</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 7 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">7️⃣</span>
+                        Implement Data Security & Privacy by Design
+                    </h3>
+                    <div class="strategy-description">
+                        Build security and privacy controls directly into data architecture from the ground up, not as an afterthought.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Implement encryption at rest and in transit</li>
+                        <li>Design role-based access controls (RBAC)</li>
+                        <li>Enable data masking and anonymization capabilities</li>
+                        <li>Ensure GDPR, HIPAA, and other regulatory compliance</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 8 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">8️⃣</span>
+                        Enable Self-Service Analytics
+                    </h3>
+                    <div class="strategy-description">
+                        Democratize data access and analytics capabilities to empower business users with self-service tools and platforms.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Deploy user-friendly BI and visualization tools</li>
+                        <li>Create data catalogs with business-friendly metadata</li>
+                        <li>Implement data lineage and impact analysis</li>
+                        <li>Provide training and support for citizen data analysts</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 9 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">9️⃣</span>
+                        Optimize for Cloud-Native Architecture
+                    </h3>
+                    <div class="strategy-description">
+                        Leverage cloud capabilities for elasticity, cost optimization, and modern data services while avoiding vendor lock-in.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Design multi-cloud or hybrid cloud strategies</li>
+                        <li>Use containerized and serverless data processing</li>
+                        <li>Implement auto-scaling and cost optimization</li>
+                        <li>Leverage managed cloud services strategically</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Strategy 10 -->
+            <div class="strategy-card">
+                <div class="strategy-content">
+                    <h3 class="strategy-title">
+                        <span class="strategy-number">🔟</span>
+                        Build Comprehensive Data Lineage & Observability
+                    </h3>
+                    <div class="strategy-description">
+                        Implement end-to-end data lineage tracking and observability to ensure data quality, debugging, and compliance.
+                    </div>
+                    <ul class="strategy-points">
+                        <li>Track data lineage from source to consumption</li>
+                        <li>Implement comprehensive data quality monitoring</li>
+                        <li>Build alerting and anomaly detection systems</li>
+                        <li>Enable impact analysis for changes and incidents</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Architecture Patterns Section -->
+        <div class="patterns-section">
+            <div class="patterns-title">
+                🏗️ <strong>Modern Data Architecture Patterns</strong>
+            </div>
+            <div class="patterns-intro">
+                <p>Three essential architectural patterns that form the foundation of modern data platforms, each optimized for different use cases and requirements.</p>
+            </div>
+
+            <div class="patterns-grid">
+                <!-- Lambda Architecture -->
+                <div class="pattern-card lambda">
+                    <div class="pattern-header">
+                        <h3 class="pattern-title">
+                            <span class="pattern-icon">λ</span>
+                            Lambda Architecture
+                        </h3>
+                        <div class="pattern-subtitle">Batch + Real-time Processing</div>
+                    </div>
+
+                    <div class="pattern-description">
+                        Hybrid architecture that combines batch and real-time processing to handle massive quantities of data
+                        with both historical analysis and real-time insights.
+                    </div>
+
+                    <div class="pattern-layers">
+                        <div class="layer batch-layer">
+                            <h4>🗄️ Batch Layer</h4>
+                            <ul>
+                                <li>Manages master dataset (immutable, append-only)</li>
+                                <li>Pre-computes batch views from historical data</li>
+                                <li>High latency but high throughput processing</li>
+                                <li>Fault tolerant and provides accurate results</li>
+                            </ul>
+                        </div>
+
+                        <div class="layer speed-layer">
+                            <h4>⚡ Speed Layer</h4>
+                            <ul>
+                                <li>Compensates for high latency of batch layer</li>
+                                <li>Processes real-time data streams</li>
+                                <li>Provides real-time views with low latency</li>
+                                <li>May sacrifice accuracy for speed</li>
+                            </ul>
+                        </div>
+
+                        <div class="layer serving-layer">
+                            <h4>🎯 Serving Layer</h4>
+                            <ul>
+                                <li>Merges results from batch and speed layers</li>
+                                <li>Provides unified view to end users</li>
+                                <li>Handles queries with pre-computed results</li>
+                                <li>Supports ad-hoc queries and analytics</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="pattern-use-cases">
+                        <h4>🎯 Best For:</h4>
+                        <div class="use-case-tags">
+                            <span class="use-case-tag">High Volume Data</span>
+                            <span class="use-case-tag">Complex Analytics</span>
+                            <span class="use-case-tag">Fault Tolerance</span>
+                            <span class="use-case-tag">Mixed Workloads</span>
+                        </div>
+                    </div>
+
+                    <div class="pattern-pros-cons">
+                        <div class="pros">
+                            <h5>✅ Advantages</h5>
+                            <ul>
+                                <li>Handles massive scale effectively</li>
+                                <li>Fault tolerant and accurate</li>
+                                <li>Supports both batch and real-time</li>
+                                <li>Battle-tested architecture</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h5>❌ Challenges</h5>
+                            <ul>
+                                <li>Complex implementation</li>
+                                <li>Dual code maintenance</li>
+                                <li>Higher operational overhead</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kappa Architecture -->
+                <div class="pattern-card kappa">
+                    <div class="pattern-header">
+                        <h3 class="pattern-title">
+                            <span class="pattern-icon">κ</span>
+                            Kappa Architecture
+                        </h3>
+                        <div class="pattern-subtitle">Stream-First Processing</div>
+                    </div>
+
+                    <div class="pattern-description">
+                        Stream-processing architecture that treats all data as streams, simplifying the Lambda architecture
+                        by removing the batch layer entirely.
+                    </div>
+
+                    <div class="pattern-layers">
+                        <div class="layer stream-layer">
+                            <h4>🌊 Stream Processing Layer</h4>
+                            <ul>
+                                <li>All data treated as continuous streams</li>
+                                <li>Single technology stack for all processing</li>
+                                <li>Reprocessing handled by replay mechanisms</li>
+                                <li>Real-time processing with configurable windows</li>
+                            </ul>
+                        </div>
+
+                        <div class="layer storage-layer">
+                            <h4>💾 Storage Layer</h4>
+                            <ul>
+                                <li>Event log serves as source of truth</li>
+                                <li>Materialized views for different access patterns</li>
+                                <li>Support for event sourcing patterns</li>
+                                <li>Temporal data modeling capabilities</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="pattern-use-cases">
+                        <h4>🎯 Best For:</h4>
+                        <div class="use-case-tags">
+                            <span class="use-case-tag">Real-time Analytics</span>
+                            <span class="use-case-tag">Event Sourcing</span>
+                            <span class="use-case-tag">Near Real-time ML</span>
+                            <span class="use-case-tag">Simple Data Flows</span>
+                        </div>
+                    </div>
+
+                    <div class="pattern-pros-cons">
+                        <div class="pros">
+                            <h5>✅ Advantages</h5>
+                            <ul>
+                                <li>Simplified architecture</li>
+                                <li>Single processing paradigm</li>
+                                <li>Easier maintenance</li>
+                                <li>Lower latency possible</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h5>❌ Challenges</h5>
+                            <ul>
+                                <li>Heavy reliance on streaming</li>
+                                <li>Historical reprocessing complexity</li>
+                                <li>Resource intensive for large volumes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Lakehouse -->
+                <div class="pattern-card lakehouse">
+                    <div class="pattern-header">
+                        <h3 class="pattern-title">
+                            <span class="pattern-icon">🏛️</span>
+                            Data Lakehouse
+                        </h3>
+                        <div class="pattern-subtitle">Lake Flexibility + Warehouse Performance</div>
+                    </div>
+
+                    <div class="pattern-description">
+                        Combines the flexibility of data lakes with the performance and ACID guarantees of data
+                        warehouses using modern storage technologies.
+                    </div>
+
+                    <div class="pattern-layers">
+                        <div class="layer storage-layer-lakehouse">
+                            <h4>📊 Unified Storage Layer</h4>
+                            <ul>
+                                <li>Uses <span class="tech-tag">Delta Lake</span> on <span class="tech-tag">Cloudera
+                                        Data Platform</span></li>
+                                <li>ACID transactions on object storage</li>
+                                <li>Schema enforcement and evolution</li>
+                                <li>Time travel and versioning capabilities</li>
+                            </ul>
+                        </div>
+
+                        <div class="layer compute-layer">
+                            <h4>⚙️ Flexible Compute Layer</h4>
+                            <ul>
+                                <li>Support for multiple engines (Spark, Presto, etc.)</li>
+                                <li>Both batch and streaming analytics</li>
+                                <li>ML and data science workloads</li>
+                                <li>Auto-scaling compute resources</li>
+                            </ul>
+                        </div>
+
+                        <div class="layer governance-layer">
+                            <h4>🛡️ Governance & Metadata Layer</h4>
+                            <ul>
+                                <li>Centralized catalog and lineage</li>
+                                <li>Fine-grained access controls</li>
+                                <li>Data quality monitoring</li>
+                                <li>Compliance and audit trails</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="pattern-use-cases">
+                        <h4>🎯 Best For:</h4>
+                        <div class="use-case-tags">
+                            <span class="use-case-tag">Modern Analytics</span>
+                            <span class="use-case-tag">Data Science</span>
+                            <span class="use-case-tag">Self-Service BI</span>
+                            <span class="use-case-tag">Unified Platform</span>
+                        </div>
+                    </div>
+
+                    <div class="pattern-pros-cons">
+                        <div class="pros">
+                            <h5>✅ Advantages</h5>
+                            <ul>
+                                <li>Best of both worlds</li>
+                                <li>Cost-effective storage</li>
+                                <li>Strong governance capabilities</li>
+                                <li>Multiple workload support</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h5>❌ Challenges</h5>
+                            <ul>
+                                <li>Relatively new technology</li>
+                                <li>Vendor ecosystem maturing</li>
+                                <li>Requires modern tooling</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pattern Selection Guide -->
+            <div class="pattern-selection">
+                <h3>🤔 How to Choose the Right Pattern</h3>
+                <div class="selection-grid">
+                    <div class="selection-card">
+                        <h4>🔄 Choose Lambda When:</h4>
+                        <ul>
+                            <li>You need both historical and real-time analytics</li>
+                            <li>Fault tolerance is critical</li>
+                            <li>Complex transformations required</li>
+                            <li>Existing batch infrastructure</li>
+                        </ul>
+                    </div>
+
+                    <div class="selection-card">
+                        <h4>⚡ Choose Kappa When:</h4>
+                        <ul>
+                            <li>Primarily real-time/near-real-time needs</li>
+                            <li>Simplicity is important</li>
+                            <li>Event-driven architecture</li>
+                            <li>Limited historical reprocessing</li>
+                        </ul>
+                    </div>
+
+                    <div class="selection-card">
+                        <h4>🏛️ Choose Lakehouse When:</h4>
+                        <ul>
+                            <li>Mixed analytical workloads (BI, ML, etc.)</li>
+                            <li>Need data warehouse performance</li>
+                            <li>Strong governance requirements</li>
+                            <li>Cost optimization priority</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Flow Architecture Section -->
+        <div class="dataflow-section">
+            <div class="dataflow-title" style="font-size: 2.8rem; margin: 35px 0; text-align: center; background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 0 30px rgba(99, 102, 241, 0.3); font-weight: 800; letter-spacing: -1px; padding: 15px 0;">
+                🔄 <strong>Data Architecture Flow</strong>
+            </div>
+            <div class="dataflow-intro">
+                <p>Complete end-to-end data architecture showing how data flows from sources through processing to
+                    consumption layers.</p>
+            </div>
+
+            <div class="dataflow-diagram">
+                <!-- Sources Layer -->
+                <div class="flow-layer sources-layer">
+                    <div class="layer-header">
+                        <h3 class="layer-title">📊 Data Sources</h3>
+                        <div class="layer-subtitle">Origin points for all enterprise data</div>
+                    </div>
+                    <div class="components-grid">
+                        <div class="component-card databases">
+                            <div class="component-icon">🗃️</div>
+                            <div class="component-title">Databases (RDBMS)</div>
+                            <div class="component-details">
+                                <span class="tech-tag">MySQL</span>
+                                <span class="tech-tag">PostgreSQL</span>
+                                <span class="tech-tag">Oracle</span>
+                                <span class="tech-tag">SQL Server</span>
+                            </div>
+                        </div>
+
+                        <div class="component-card logs-iot">
+                            <div class="component-icon">📡</div>
+                            <div class="component-title">Logs & IoT</div>
+                            <div class="component-details">
+                                <span class="tech-tag">Application Logs</span>
+                                <span class="tech-tag">IoT Sensors</span>
+                                <span class="tech-tag">System Metrics</span>
+                            </div>
+                        </div>
+
+                        <div class="component-card apis">
+                            <div class="component-icon">🌐</div>
+                            <div class="component-title">APIs / Streaming</div>
+                            <div class="component-details">
+                                <span class="tech-tag">REST APIs</span>
+                                <span class="tech-tag">Event Streams</span>
+                                <span class="tech-tag">Message Queues</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Arrow -->
+                <div class="flow-arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head">▼</div>
+                </div>
+
+                <!-- Ingestion Layer -->
+                <div class="flow-layer ingestion-layer">
+                    <div class="layer-header">
+                        <h3 class="layer-title">📥 Ingestion Layer</h3>
+                        <div class="layer-subtitle">Data collection and initial processing</div>
+                    </div>
+                    <div class="components-grid">
+                        <div class="component-card nifi">
+                            <div class="component-icon">🔄</div>
+                            <div class="component-title">Apache NiFi</div>
+                            <div class="component-desc">Visual data flow management</div>
+                        </div>
+
+                        <div class="component-card kafka">
+                            <div class="component-icon">⚡</div>
+                            <div class="component-title">Apache Kafka</div>
+                            <div class="component-desc">Real-time streaming platform</div>
+                        </div>
+
+                        <div class="component-card sqoop">
+                            <div class="component-icon">🔗</div>
+                            <div class="component-title">Apache Sqoop</div>
+                            <div class="component-desc">Batch data transfer tool</div>
+                        </div>
+
+                        <div class="component-card flume">
+                            <div class="component-icon">💧</div>
+                            <div class="component-title">Apache Flume</div>
+                            <div class="component-desc">Log data collection service</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Arrow -->
+                <div class="flow-arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head">▼</div>
+                </div>
+
+                <!-- Raw Storage Layer -->
+                <div class="flow-layer storage-layer">
+                    <div class="layer-header">
+                        <h3 class="layer-title">💾 Raw Storage</h3>
+                        <div class="layer-subtitle">Scalable data lake storage</div>
+                    </div>
+                    <div class="components-grid">
+                        <div class="component-card hdfs">
+                            <div class="component-icon">🗂️</div>
+                            <div class="component-title">Hadoop HDFS</div>
+                            <div class="component-desc">Distributed file system</div>
+                        </div>
+
+                        <div class="component-card s3">
+                            <div class="component-icon">☁️</div>
+                            <div class="component-title">Amazon S3</div>
+                            <div class="component-desc">Cloud object storage</div>
+                        </div>
+
+                        <div class="component-card kudu">
+                            <div class="component-icon">⚡</div>
+                            <div class="component-title">Apache Kudu</div>
+                            <div class="component-desc">Columnar storage engine</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Arrow -->
+                <div class="flow-arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head">▼</div>
+                </div>
+
+                <!-- Processing Layer -->
+                <div class="flow-layer processing-layer">
+                    <div class="layer-header">
+                        <h3 class="layer-title">⚙️ Processing Layer</h3>
+                        <div class="layer-subtitle">Data transformation and analytics engines</div>
+                    </div>
+                    <div class="processing-engines">
+                        <div class="component-card spark">
+                            <div class="component-icon">⚡</div>
+                            <div class="component-title">Apache Spark</div>
+                            <div class="component-desc">Unified analytics engine</div>
+                        </div>
+
+                        <div class="component-card hive">
+                            <div class="component-icon">🍯</div>
+                            <div class="component-title">Apache Hive</div>
+                            <div class="component-desc">SQL on Hadoop</div>
+                        </div>
+
+                        <div class="component-card impala">
+                            <div class="component-icon">🚀</div>
+                            <div class="component-title">Apache Impala</div>
+                            <div class="component-desc">High-performance SQL</div>
+                        </div>
+                    </div>
+
+                    <div class="job-types">
+                        <div class="job-type batch-jobs">
+                            <h4>📋 Batch Jobs</h4>
+                            <ul>
+                                <li>ETL/ELT processing</li>
+                                <li>Historical data analysis</li>
+                                <li>Data quality checks</li>
+                                <li>Scheduled transformations</li>
+                            </ul>
+                        </div>
+
+                        <div class="job-type streaming-jobs">
+                            <h4>⚡ Streaming Jobs</h4>
+                            <ul>
+                                <li>Real-time processing</li>
+                                <li>Event-driven analytics</li>
+                                <li>Live dashboards</li>
+                                <li>Anomaly detection</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Arrow -->
+                <div class="flow-arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head">▼</div>
+                </div>
+
+                <!-- Curated Storage Layer -->
+                <div class="flow-layer curated-layer">
+                    <div class="layer-header">
+                        <h3 class="layer-title">📈 Curated / Analytics Storage</h3>
+                        <div class="layer-subtitle">Optimized for analytics and consumption</div>
+                    </div>
+                    <div class="components-grid">
+                        <div class="component-card hbase">
+                            <div class="component-icon">🗃️</div>
+                            <div class="component-title">Apache HBase</div>
+                            <div class="component-desc">NoSQL columnar database</div>
+                        </div>
+
+                        <div class="component-card kudu-analytics">
+                            <div class="component-icon">⚡</div>
+                            <div class="component-title">Apache Kudu</div>
+                            <div class="component-desc">Fast analytics on fast data</div>
+                        </div>
+
+                        <div class="component-card hive-tables">
+                            <div class="component-icon">📊</div>
+                            <div class="component-title">Hive Tables</div>
+                            <div class="component-desc">Structured data warehouses</div>
+                        </div>
+
+                        <div class="component-card delta-lake">
+                            <div class="component-icon">🏛️</div>
+                            <div class="component-title">Delta Lake (ACID)</div>
+                            <div class="component-desc">Reliable data lake storage</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Flow Arrow -->
+                <div class="flow-arrow">
+                    <div class="arrow-line"></div>
+                    <div class="arrow-head">▼</div>
+                </div>
+
+                <!-- Consumption Layer -->
+                <div class="flow-layer consumption-layer">
+                    <div class="layer-header">
+                        <h3 class="layer-title">📱 Consumption Layer</h3>
+                        <div class="layer-subtitle">End-user applications and services</div>
+                        <div class="components-grid">
+                            <div class="component-card bi-dashboards">
+                                <div class="component-icon">📊</div>
+                                <div class="component-title">BI Dashboards</div>
+                                <div class="component-details">
+                                    <span class="tech-tag">Tableau</span>
+                                    <span class="tech-tag">Power BI</span>
+                                    <span class="tech-tag">Looker</span>
+                                </div>
+                            </div>
+
+                            <div class="component-card ml-models">
+                                <div class="component-icon">🤖</div>
+                                <div class="component-title">ML Models</div>
+                                <div class="component-details">
+                                    <span class="tech-tag">MLflow</span>
+                                    <span class="tech-tag">Kubeflow</span>
+                                    <span class="tech-tag">SageMaker</span>
+                                </div>
+                            </div>
+
+                            <div class="component-card data-apis">
+                                <div class="component-icon">🔌</div>
+                                <div class="component-title">Data APIs</div>
+                                <div class="component-details">
+                                    <span class="tech-tag">REST APIs</span>
+                                    <span class="tech-tag">GraphQL</span>
+                                    <span class="tech-tag">Real-time APIs</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Governance Bar -->
+                    <div class="governance-bar">
+                        <div class="governance-content">
+                            <div class="governance-title">
+                                <span class="governance-icon">🛡️</span>
+                                <strong>Governance & Security</strong>
+                            </div>
+                            <div class="governance-tools">
+                                <div class="governance-tool atlas">
+                                    <span class="tool-icon">📋</span>
+                                    <div class="tool-info">
+                                        <div class="tool-name">Apache Atlas</div>
+                                        <div class="tool-desc">Metadata management & lineage</div>
+                                    </div>
+                                </div>
+
+                                <div class="governance-tool ranger">
+                                    <span class="tool-icon">🔐</span>
+                                    <div class="tool-info">
+                                        <div class="tool-name">Apache Ranger</div>
+                                        <div class="tool-desc">Access control & policies</div>
+                                    </div>
+                                </div>
+
+                                <div class="governance-tool sentry">
+                                    <span class="tool-icon">🔒</span>
+                                    <div class="tool-info">
+                                        <div class="tool-name">Apache Sentry</div>
+                                        <div class="tool-desc">Role-based authorization</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technology Comparison Matrix -->
+            <div class="tech-comparison">
+                <h3>🔍 Technology Comparison Matrix</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Technology</th>
+                            <th>Use Case</th>
+                            <th>Scalability</th>
+                            <th>Performance</th>
+                            <th>Complexity</th>
+                            <th>Cost</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Apache Kafka</strong></td>
+                            <td>Real-time Streaming</td>
+                            <td>Excellent</td>
+                            <td>High</td>
+                            <td>Medium</td>
+                            <td>Open Source</td>
+                            <td>
+                                <div class="rating">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Apache Spark</strong></td>
+                            <td>Batch & Stream Processing</td>
+                            <td>Excellent</td>
+                            <td>Very High</td>
+                            <td>Medium</td>
+                            <td>Open Source</td>
+                            <td>
+                                <div class="rating">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Hadoop HDFS</strong></td>
+                            <td>Distributed Storage</td>
+                            <td>Excellent</td>
+                            <td>Medium</td>
+                            <td>High</td>
+                            <td>Open Source</td>
+                            <td>
+                                <div class="rating">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star empty">★</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Amazon S3</strong></td>
+                            <td>Cloud Object Storage</td>
+                            <td>Unlimited</td>
+                            <td>High</td>
+                            <td>Low</td>
+                            <td>Pay-per-use</td>
+                            <td>
+                                <div class="rating">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Apache Hive</strong></td>
+                            <td>SQL on Hadoop</td>
+                            <td>Good</td>
+                            <td>Medium</td>
+                            <td>Low</td>
+                            <td>Open Source</td>
+                            <td>
+                                <div class="rating">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star empty">★</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Apache Impala</strong></td>
+                            <td>Interactive SQL</td>
+                            <td>Good</td>
+                            <td>Very High</td>
+                            <td>Medium</td>
+                            <td>Open Source</td>
+                            <td>
+                                <div class="rating">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star empty">★</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Delta Lake</strong></td>
+                            <td>ACID Data Lake</td>
+                            <td>Excellent</td>
+                            <td>High</td>
+                            <td>Low</td>
+                            <td>Open Source</td>
+                            <td>
+                                <div class="rating">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Apache HBase</strong></td>
+                            <td>NoSQL Database</td>
+                            <td>Excellent</td>
+                            <td>High</td>
+                            <td>High</td>
+                            <td>Open Source</td>
+                            <td>
+                                <div class="rating">
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star">★</span>
+                                    <span class="star empty">★</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- DAMA Knowledge Areas Section -->
+            <div class="dama-section">
+                <div class="dama-title" style="font-size: 3rem; margin: 40px 0; text-align: center; background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 0 40px rgba(99, 102, 241, 0.4); font-weight: 900; letter-spacing: -1px; padding: 20px 0; border-top: 3px solid rgba(99, 102, 241, 0.3); border-bottom: 3px solid rgba(99, 102, 241, 0.3);">
+                    🎯 <strong>DAMA Knowledge Areas Framework</strong>
+                </div>
+                
+                <div class="dama-intro">
+                    <p>The Data Management Association (DAMA) framework provides a comprehensive approach to data
+                        management with Data Governance at the center, surrounded by 10 specialized knowledge areas.</p>
+                </div>
+
+                <!-- Center Governance -->
+                <div class="governance-center">
+                    <div class="center-card">
+                        <div class="center-icon">🛡️</div>
+                        <div class="center-title">Data Governance</div>
+                        <div class="center-subtitle">(CORE)</div>
+                        <div class="center-description">
+                            <strong>Purpose:</strong> Ensure data is managed as an asset with clear rules,
+                            accountability, and quality.
+                        </div>
+                        <div class="center-includes">
+                            <strong>Includes:</strong> Policies, standards, stewardship, data councils, compliance
+                        </div>
+                        <div class="center-outputs">
+                            <strong>Outputs:</strong> Data governance framework, data standards, RACI, stewardship model
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Knowledge Areas Grid -->
+                <div class="knowledge-areas-title">
+                    <h3>🔄 The 10 Outer Knowledge Areas</h3>
+                    <p>Each discipline with its purpose and typical deliverables</p>
+                </div>
+
+                <div class="knowledge-areas-grid">
+                    <!-- 2. Data Architecture -->
+                    <div class="knowledge-card architecture">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">2</span>
+                            <h4>Data Architecture</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Blueprint for how data is structured, integrated, and flows across
+                            the enterprise.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> Reference architectures, data frameworks, integration patterns
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Data architecture diagrams, conceptual models, data strategy
+                            roadmap
+                        </div>
+                    </div>
+
+                    <!-- 3. Data Modeling & Design -->
+                    <div class="knowledge-card modeling">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">3</span>
+                            <h4>Data Modeling & Design</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Define data structures and relationships.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> ERDs, logical models, physical schema design
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Data models, schema documentation, modeling standards
+                        </div>
+                    </div>
+
+                    <!-- 4. Data Storage & Operations -->
+                    <div class="knowledge-card storage">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">4</span>
+                            <h4>Data Storage & Operations</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Manage physical storage, backup, retention, performance, and
+                            operations.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> Databases, data lakes, clusters, indexing, archiving
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Backup strategies, retention policies, DB performance plans
+                        </div>
+                    </div>
+
+                    <!-- 5. Data Security -->
+                    <div class="knowledge-card security">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">5</span>
+                            <h4>Data Security</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Protect data confidentiality, integrity, and availability.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> Access control, encryption, data privacy, regulatory compliance
+                            (HIPAA, GDPR)
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Security policies, IAM rules, PHI/PII protection practices
+                        </div>
+                    </div>
+
+                    <!-- 6. Data Integration & Interoperability -->
+                    <div class="knowledge-card integration">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">6</span>
+                            <h4>Data Integration & Interoperability</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Connect systems and enable data flow across apps/platforms.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> ETL/ELT, data pipelines, APIs, messaging, FHIR (healthcare)
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Integration maps, API specifications, pipeline architecture
+                        </div>
+                    </div>
+
+                    <!-- 7. Document & Content Management -->
+                    <div class="knowledge-card document">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">7</span>
+                            <h4>Document & Content Management</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Manage unstructured content (docs, images, PDFs, media).
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> ECM systems, document classification, versioning
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Document libraries, taxonomy, metadata rules
+                        </div>
+                    </div>
+
+                    <!-- 8. Reference & Master Data Management -->
+                    <div class="knowledge-card mdm">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">8</span>
+                            <h4>Reference & Master Data Management (MDM)</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Create a single source of truth for key subject areas.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> Patient/member/provider masters, product catalog, golden records
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Master data hub, match-merge rules, survivorship logic
+                        </div>
+                    </div>
+
+                    <!-- 9. Data Warehousing & Business Intelligence -->
+                    <div class="knowledge-card warehousing">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">9</span>
+                            <h4>Data Warehousing & Business Intelligence</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Support analytics, dashboards, and reporting.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> Data marts, OLAP, semantic layers, KPI frameworks
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Data warehouse schemas, BI dashboards, analytics models
+                        </div>
+                    </div>
+
+                    <!-- 10. Metadata Management -->
+                    <div class="knowledge-card metadata">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">10</span>
+                            <h4>Metadata Management</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Make data understandable and discoverable.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> Data catalogs, lineage, business definitions, glossaries
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> Data dictionary, lineage diagrams, metadata repository
+                        </div>
+                    </div>
+
+                    <!-- 11. Data Quality -->
+                    <div class="knowledge-card quality">
+                        <div class="knowledge-header">
+                            <span class="knowledge-number">11</span>
+                            <h4>Data Quality</h4>
+                        </div>
+                        <div class="knowledge-purpose">
+                            <strong>Purpose:</strong> Ensure accuracy, completeness, consistency, and reliability of
+                            data.
+                        </div>
+                        <div class="knowledge-includes">
+                            <strong>Includes:</strong> Profiling, cleansing, validation rules, monitoring
+                        </div>
+                        <div class="knowledge-outputs">
+                            <strong>Outputs:</strong> DQ rules, scorecards, profiling reports, quality dashboards
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DAMA Implementation Guide -->
+                <div class="dama-implementation">
+                    <h3>🚀 DAMA Implementation Strategy</h3>
+                    <div class="implementation-phases">
+                        <div class="phase-card">
+                            <h4>🏛️ Phase 1: Foundation</h4>
+                            <ul>
+                                <li>Establish Data Governance Council</li>
+                                <li>Define Data Architecture vision</li>
+                                <li>Implement basic Data Quality monitoring</li>
+                                <li>Set up initial Metadata Management</li>
+                            </ul>
+                        </div>
+
+                        <div class="phase-card">
+                            <h4>🔧 Phase 2: Core Capabilities</h4>
+                            <ul>
+                                <li>Deploy Master Data Management</li>
+                                <li>Implement Data Security framework</li>
+                                <li>Build Data Integration pipelines</li>
+                                <li>Establish Data Modeling standards</li>
+                            </ul>
+                        </div>
+
+                        <div class="phase-card">
+                            <h4>📊 Phase 3: Advanced Analytics</h4>
+                            <ul>
+                                <li>Deploy Data Warehousing solutions</li>
+                                <li>Implement Document Management</li>
+                                <li>Optimize Data Storage & Operations</li>
+                                <li>Advanced analytics and BI capabilities</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Architecture Benefits Section -->
+            <div class="architecture-benefits">
+                <h3>🎯 Key Architecture Benefits</h3>
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">📈</div>
+                        <h4>Scalability</h4>
+                        <p>Horizontal scaling across distributed storage and compute layers</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">⚡</div>
+                        <h4>Performance</h4>
+                        <p>Optimized for both batch and real-time processing workloads</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🛡️</div>
+                        <h4>Security</h4>
+                        <p>Enterprise-grade governance and access controls</p>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🔄</div>
+                        <h4>Flexibility</h4>
+                        <p>Support for diverse data types and processing patterns</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+</body>
+
+</html>
